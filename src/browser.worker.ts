@@ -732,8 +732,8 @@ function handleConvert(msg: WorkerMessage) {
     module.FS.writeFile(inPath, inputData);
 
     postProgress(msg.id, 30, 'Loading document...');
-    // Build load options for CSV import filter and/or password
-    const loadOptions = buildLoadOptions(inputExt, password);
+    // Build load options for CSV import filter, PDF input filter, and/or password
+    const loadOptions = buildLoadOptions(inputExt, password, outputFormat);
     if (loadOptions) {
       docPtr = lokBindings.documentLoadWithOptions(inPath, loadOptions);
     } else {

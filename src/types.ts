@@ -20,6 +20,10 @@ export type InputFormat =
   | 'odp'
   | 'odg'
   | 'odf'
+  // Apple iWork formats
+  | 'pages'
+  | 'key'
+  | 'numbers'
   // Other formats
   | 'rtf'
   | 'txt'
@@ -611,6 +615,9 @@ export const EXTENSION_TO_FORMAT: Record<string, InputFormat> = {
   odp: 'odp',
   odg: 'odg',
   odf: 'odf',
+  pages: 'pages',
+  key: 'key',
+  numbers: 'numbers',
   rtf: 'rtf',
   txt: 'txt',
   html: 'html',
@@ -725,12 +732,28 @@ export const CSV_IMPORT_FILTER_OPTIONS = 'FilterName=Text - txt - csv (StarCalc)
  * @param password Optional password for encrypted documents
  * @returns Load options string for documentLoadWithOptions, or empty string for documentLoad
  */
-export function buildLoadOptions(inputFormat?: string, password?: string): string {
+export function buildLoadOptions(inputFormat?: string, password?: string, outputFormat?: string): string {
   const options: string[] = [];
   
   // CSV files need explicit import filter to be recognized as spreadsheets
   if (inputFormat?.toLowerCase() === 'csv') {
     options.push(CSV_IMPORT_FILTER_OPTIONS);
+  }
+  
+  // PDF files need an explicit input filter when converting to office formats.
+  // By default LibreOffice opens PDFs in Draw, which can only export to PDF/PNG/SVG.
+  // Using writer_pdf_import forces Writer to open the PDF as editable text,
+  // enabling export to DOCX, DOC, ODT, RTF, TXT, etc.
+  // Using impress_pdf_import forces Impress to open the PDF for PPTX/PPT/ODP export.
+  if (inputFormat?.toLowerCase() === 'pdf' && outputFormat) {
+    const out = outputFormat.toLowerCase();
+    const writerFormats = ['docx', 'doc', 'odt', 'rtf', 'txt', 'html', 'xml'];
+    const impressFormats = ['pptx', 'ppt', 'odp'];
+    if (writerFormats.includes(out)) {
+      options.push('FilterName=writer_pdf_import');
+    } else if (impressFormats.includes(out)) {
+      options.push('FilterName=impress_pdf_import');
+    }
   }
   
   // Password-protected documents
@@ -761,6 +784,10 @@ export const INPUT_FORMAT_CATEGORY: Record<InputFormat, DocumentCategory> = {
   htm: 'text',
   epub: 'text',
   xml: 'text',
+  // Apple iWork documents
+  pages: 'text',
+  key: 'presentation',
+  numbers: 'spreadsheet',
   // Spreadsheet/Calc documents
   xls: 'spreadsheet',
   xlsx: 'spreadsheet',
@@ -770,10 +797,11 @@ export const INPUT_FORMAT_CATEGORY: Record<InputFormat, DocumentCategory> = {
   ppt: 'presentation',
   pptx: 'presentation',
   odp: 'presentation',
-  // Drawing/Draw documents (PDF imports as Draw)
+  // Drawing/Draw documents (PDF imports as Draw by default,
+  // but can be loaded via writer_pdf_import for text export)
   odg: 'drawing',
   odf: 'drawing',
-  pdf: 'drawing', // PDFs are imported as Draw documents
+  pdf: 'drawing',
 };
 
 /**
@@ -807,8 +835,17 @@ export function getValidOutputFormats(inputFormat: InputFormat | string): Output
   const category = INPUT_FORMAT_CATEGORY[format];
 
   if (!category) {
-    // Unknown format - allow PDF as a safe default
     return ['pdf'];
+  }
+
+  // PDF can be opened via different import filters, enabling all office output formats
+  // writer_pdf_import → text outputs, impress_pdf_import → presentation outputs
+  if (format === 'pdf') {
+    return [
+      ...CATEGORY_OUTPUT_FORMATS['drawing'],
+      ...CATEGORY_OUTPUT_FORMATS['text'],
+      ...CATEGORY_OUTPUT_FORMATS['presentation'],
+    ].filter((v, i, a) => a.indexOf(v) === i);
   }
 
   return CATEGORY_OUTPUT_FORMATS[category];

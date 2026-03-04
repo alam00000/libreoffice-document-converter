@@ -92,3 +92,9 @@
 --enable-pdfimport
 --enable-pdfium
 --disable-poppler
+
+# ==========================================
+# iWork (Pages/Keynote/Numbers) import support
+# Requires libetonyek for iWork format parsing
+# ==========================================
+--enable-etonyek

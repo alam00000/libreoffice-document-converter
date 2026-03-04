@@ -208,6 +208,17 @@ else
     log_warn "Please ensure build/patches/wasm-build-fixes.patch exists"
 fi
 
+# Preserve libetonyek (iWork: Pages/Keynote/Numbers) in WASM builds.
+# The wasm_strip block in configure.ac disables many external libs including etonyek.
+# We patch it out so --enable-etonyek from autogen.input takes effect.
+log_info "Patching configure.ac to preserve libetonyek for iWork support..."
+if grep -q 'enable_etonyek=no' configure.ac; then
+    sed -i 's/enable_etonyek=no/# enable_etonyek preserved for iWork support/' configure.ac
+    log_success "Patched configure.ac: libetonyek preserved"
+else
+    log_warn "enable_etonyek=no not found in configure.ac (may already be patched)"
+fi
+
 # Create autotext files (handled in Step 6 background process)
 # The mytexts autotext build tries to zip files that don't exist in WASM builds
 

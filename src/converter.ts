@@ -502,8 +502,8 @@ export class LibreOfficeConverter implements ILibreOfficeConverter {
     let docPtr = 0;
 
     try {
-      // Build load options (e.g., for CSV import filter or password-protected documents)
-      const loadOptions = buildLoadOptions(options.inputFormat, options.password);
+      // Build load options (e.g., for CSV import filter, PDF input filter, or password)
+      const loadOptions = buildLoadOptions(options.inputFormat, options.password, options.outputFormat);
 
       // Debug: verify file exists before LOK load
       if (this.options.verbose) {
