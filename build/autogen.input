@@ -95,6 +95,6 @@
 
 # ==========================================
 # iWork (Pages/Keynote/Numbers) import support
-# Requires libetonyek for iWork format parsing
+# libetonyek is enabled by patching test_libetonyek in configure.ac
+# (there is no --enable-etonyek flag; it's controlled internally)
 # ==========================================
---enable-etonyek
